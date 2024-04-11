@@ -1,14 +1,12 @@
+import { MessageValidation } from './message-validation.schema';
 import { Provider } from './provider.schema';
 import { MessageDispatchParameter } from './message-dispatch-parameter.schema';
 import { Message } from './message.schema';
-import { MessageDispatchValidation } from './message-dispatch-validation.schema';
-import { MessageStatus, MessageDispatchStatus } from '../agio-namespace/message.namespace';
-import { MessageText } from './message-text.schema';
+import { MessageDispatchStatus } from '../agio-namespace/message.namespace';
 import { Collection } from '../agio-namespace/collection.namespace';
-import { Document, ObjectId, Types } from 'mongoose';
+import { Document, Types } from 'mongoose';
 import { Prop, Schema, SchemaFactory } from "@nestjs/mongoose";
 import { AgioBaseSchema } from '../agio-common/base.schema';
-import { MessageTemplate } from './message-template.schema';
 import { MessageReceiver } from './receiver.schema';
 import { MessageLog } from './message-log.schema';
 
@@ -21,19 +19,33 @@ export type MessageDispatchDocument = MessageDispatch & Document;
 // TODO unique idMessage + idProvider + idReceiver + attempt
 export class MessageDispatch extends AgioBaseSchema {
 
-    @Prop({ type: Types.ObjectId, required: true })
-    idMessage: ObjectId;
+    @Prop({
+        type: Types.ObjectId,
+        ref: Message.name,
+        required: true,
+        autopopulate: true
+    })
+    message: Message; 
 
-    @Prop({ type: Types.ObjectId, required: true })
-    idProvider: ObjectId;
+    @Prop({
+        type: Types.ObjectId,
+        ref: Provider.name,
+        required: true
+    })
+    provider: Provider; 
 
-    @Prop({ type: Types.ObjectId, required: true })
-    idReceiver: ObjectId;
+    @Prop({
+        type: Types.ObjectId,
+        ref: MessageReceiver.name,
+        required: true,
+        autopopulate: true
+    })
+    receiver: MessageReceiver; 
 
     @Prop()
     status: MessageDispatchStatus;
 
-    @Prop({ default: 1 })
+    @Prop({ required: true, default: 1 })
     attempt: number;
 
     @Prop({ default: null })
@@ -50,43 +62,21 @@ export class MessageDispatch extends AgioBaseSchema {
 
     @Prop({
         type: Types.ObjectId,
-        ref: Message.name,
+        ref: MessageValidation.name,
         autopopulate: true
     })
-    message: Message; 
-
-    @Prop({
-        type: Types.ObjectId,
-        ref: Provider.name,
-        autopopulate: true
-    })
-    provider: Provider;
-
-    @Prop({
-        type: Types.ObjectId,
-        ref: MessageReceiver.name,
-        autopopulate: true
-    })
-    receiver: MessageReceiver; 
-
-    @Prop({
-        type: Types.ObjectId,
-        ref: MessageDispatchValidation.name,
-        autopopulate: true
-    })
-    validation: MessageDispatchValidation; 
+    validation: MessageValidation; 
 
     @Prop({ type: [{
         type: Types.ObjectId,
         ref: MessageDispatchParameter.name,
         autopopulate: true
     }]})
-    parameters: MessageDispatchParameter; 
+    parameters: MessageDispatchParameter[]; 
 
     @Prop({ type: [{
         type: Types.ObjectId,
-        ref: MessageLog.name,
-        autopopulate: false
+        ref: MessageLog.name
     }]})
     logs: MessageLog[]; 
 }

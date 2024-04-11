@@ -11,7 +11,6 @@ import { Provider } from './agio-schema/provider.schema';
 import { User } from './agio-schema/user.schema';
 import { AgioDatasourceModule } from './datasource.module';
 import { MessageDispatchParameter } from './agio-schema/message-dispatch-parameter.schema';
-import { MessageDispatchValidation } from './agio-schema/message-dispatch-validation.schema';
 import { MessageDispatch } from './agio-schema/message-dispatch.schema';
 import { MessageLog } from './agio-schema/message-log.schema';
 import { MessageTemplate } from './agio-schema/message-template.schema';
@@ -33,7 +32,6 @@ export {
     MessageReceiver,
     MessageLog,
     MessageValidation,
-    MessageDispatchValidation,
 
     /** SERVICES */
     AgioUserService,

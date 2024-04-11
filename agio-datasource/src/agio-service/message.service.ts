@@ -7,7 +7,6 @@ import { Injectable } from "@nestjs/common";
 import { AgioDatabaseBaseService } from "../agio-common/base.service";
 import { AgioMessageDao } from '../agio-dao/message.dao';
 import { MessageDispatchStatus, MessageStatus } from '../agio-namespace/message.namespace';
-import { MessageDispatchValidation } from '../agio-schema/message-dispatch-validation.schema';
 
 @Injectable()
 export class AgioMessageService extends AgioDatabaseBaseService<Message> {
@@ -18,103 +17,91 @@ export class AgioMessageService extends AgioDatabaseBaseService<Message> {
         super(messageDao);
     }
 
-    public async getByStatus(status: MessageStatus): Promise<Message[]> {
-        return await this.messageDao.getByStatus(status);
-    }
-
     public async getByStatusCreated(): Promise<Message[]> {
         return await this.messageDao.getByStatusCreated();
     }
 
-    public async updateFromStatus(message: Message, oldStatus: MessageStatus): Promise<Message> {
-        return await this.messageDao.updateFromStatus(message, oldStatus);
-    }
-
-    public async updateStatusFromStatus(_id: ObjectId, newStatus: MessageStatus, oldStatus: MessageStatus): Promise<Message> {
-        return await this.messageDao.updateStatusFromStatus(_id, newStatus, oldStatus);
+    public async insert(message: Message): Promise<Message> { 
+        return await this.messageDao.insert(message);
     }
 
 
     // STATUSES
 
     public async updateStatusCreated(message: Message): Promise<Message> {
-        return await this.updateStatusFromStatus(message._id, MessageStatus.CREATED, null);
+        return await this.messageDao.updateStatusCreated(message);
     }
 
     public async updateStatusValidating(message: Message): Promise<Message> {
-        return await this.updateStatusFromStatus(message._id, MessageStatus.VALIDATING, MessageStatus.CREATED);
+        return await this.messageDao.updateStatusValidating(message);
     }
 
     public async updateStatusCompleted(message: Message): Promise<Message> {
-        return await this.updateStatusFromStatus(message._id, MessageStatus.COMPLETED, MessageStatus.OK);
+        return await this.messageDao.updateStatusFromStatus(message, MessageStatus.COMPLETED, MessageStatus.OK);
     }
 
 
     // VALIDATION
 
     public async addValidation(message: Message, isValid: boolean, details?: string[], force?: boolean): Promise<Message> {
-        const validation = new MessageValidation();
+        let validation = new MessageValidation();
         validation.isValid = isValid;
         validation.details = details;
         validation.force = force;
 
-        message.validation = validation;
-        message.status = !isValid && !force ? MessageStatus.INVALID : MessageStatus.OK;
+        validation = await this.messageDao.insertValidation(validation);
+        
+        message = await this.messageDao.addValidation(message, validation);
 
-        return this.updateFromStatus(message, MessageStatus.VALIDATING);
+        const status = validation.isValid ? MessageStatus.OK : MessageStatus.INVALID;
+        return this.messageDao.updateStatusFromStatus(message, status, MessageStatus.VALIDATING);
     }
 
     public async updateValidationFromInvalid(message: Message, forced: boolean): Promise<Message> {
-        message.validation.force = forced;
-        message.status = forced ? MessageStatus.OK : MessageStatus.REFUSED;
+        await this.messageDao.forceValidation(message.validation, forced);
 
-        return this.updateFromStatus(message, MessageStatus.INVALID);
+        const status = forced ? MessageStatus.OK : MessageStatus.REFUSED;
+        return this.messageDao.updateStatusFromStatus(message, status, MessageStatus.INVALID);
     }
 
 
     // DISPATCH
 
-    public async getDispatchesByStatus(status: MessageDispatchStatus): Promise<MessageDispatch[]> {
-        return await this.messageDao.getDispatchesByStatus(status);
-    }
-
     public async getDispatchesByStatusReady(): Promise<MessageDispatch[]> {
         return await this.messageDao.getDispatchesByStatusReady();
     }
 
-    public async updateDispatchFromStatus(dispatch: MessageDispatch, oldStatus: MessageDispatchStatus): Promise<MessageDispatch> {
-        return await this.messageDao.updateDispatchFromStatus(dispatch, oldStatus);
+    public async insertDispatch(dispatch: MessageDispatch): Promise<MessageDispatch> { 
+        return await this.messageDao.insertDispatch(dispatch);
     }
 
-    public async updateDispatchStatusFromStatus(_id: ObjectId, newStatus: MessageDispatchStatus, oldStatus: MessageDispatchStatus): Promise<MessageDispatch> {
-        return await this.messageDao.updateDispatchStatusFromStatus(_id, newStatus, oldStatus);
-    }
-
-    public async updateDispatchStatusCreated(dispatch: MessageDispatch): Promise<MessageDispatch> {
-        return await this.updateDispatchStatusFromStatus(dispatch._id, MessageDispatchStatus.READY, null);
+    public async updateDispatchStatusReady(dispatch: MessageDispatch): Promise<MessageDispatch> {
+        return await this.messageDao.updateDispatchStatusReady(dispatch);
     }
 
     public async updateDispatchStatusValidating(dispatch: MessageDispatch): Promise<MessageDispatch> {
-        return await this.updateDispatchStatusFromStatus(dispatch._id, MessageDispatchStatus.VALIDATING, MessageDispatchStatus.READY);
+        return await this.messageDao.updateDispatchStatusFromStatus(dispatch, MessageDispatchStatus.VALIDATING, MessageDispatchStatus.READY);
     }
 
     public async addDispatchValidation(dispatch: MessageDispatch, isValid: boolean, details?: string[], force?: boolean): Promise<MessageDispatch> {
-        const validation = new MessageDispatchValidation();
+        let validation = new MessageValidation();
         validation.isValid = isValid;
         validation.details = details;
-        validation.force = force;
+        validation.force = force;   
 
-        dispatch.validation = validation;
-        dispatch.status = !isValid && !force ? MessageDispatchStatus.INVALID : MessageDispatchStatus.SCHEDULED;
+        validation = await this.messageDao.insertValidation(validation);
+        
+        dispatch = await this.messageDao.addDispatchValidation(dispatch, validation);
 
-        return this.updateDispatchFromStatus(dispatch, MessageDispatchStatus.VALIDATING);
+        const status = validation.isValid ? MessageDispatchStatus.SCHEDULED : MessageDispatchStatus.INVALID;
+        return this.messageDao.updateDispatchStatusFromStatus(dispatch, status, MessageDispatchStatus.VALIDATING);
     }
 
     public async updateDispatchValidationFromInvalid(dispatch: MessageDispatch, forced: boolean): Promise<MessageDispatch> {
-        dispatch.validation.force = forced;
-        dispatch.status = forced ? MessageDispatchStatus.SCHEDULED : MessageDispatchStatus.REFUSED;
+        await this.messageDao.forceValidation(dispatch.validation, forced);
 
-        return this.updateDispatchFromStatus(dispatch, MessageDispatchStatus.INVALID);
+        const status = forced ? MessageDispatchStatus.SCHEDULED : MessageDispatchStatus.REFUSED;
+        return this.messageDao.updateDispatchStatusFromStatus(dispatch, status, MessageDispatchStatus.INVALID);
     }
 
     public async getDispatchesByStatusScheduled(): Promise<MessageDispatch[]> {
@@ -122,7 +109,7 @@ export class AgioMessageService extends AgioDatabaseBaseService<Message> {
     }
 
     public async updateDispatchStatusSending(dispatch: MessageDispatch): Promise<MessageDispatch> {
-        return await this.updateDispatchStatusFromStatus(dispatch._id, MessageDispatchStatus.SCHEDULED, MessageDispatchStatus.SENDING);
+        return await this.messageDao.updateDispatchStatusFromStatus(dispatch, MessageDispatchStatus.SCHEDULED, MessageDispatchStatus.SENDING);
     }
 
     public async updateDispatchSent(dispatch: MessageDispatch, identifier: string, error: boolean, detail?: string): Promise<MessageDispatch> {
@@ -131,10 +118,10 @@ export class AgioMessageService extends AgioDatabaseBaseService<Message> {
         dispatch.identifier = identifier;
         dispatch.detail = detail;        
 
-        return await this.updateDispatchFromStatus(dispatch, MessageDispatchStatus.SENDING);
+        return await this.messageDao.updateDispatchFromStatus(dispatch, MessageDispatchStatus.SENDING);
     }
 
-    public async rescheduleDispatch(dispatch: MessageDispatch): Promise<MessageDispatch> {
+    /* public async rescheduleDispatch(dispatch: MessageDispatch): Promise<MessageDispatch> {
         const nextDispatch = new MessageDispatch();
         nextDispatch.message = dispatch.message;
         nextDispatch.provider = dispatch.provider;
@@ -145,28 +132,27 @@ export class AgioMessageService extends AgioDatabaseBaseService<Message> {
     
         // TODO insert
         
-        return await this.updateDispatchStatusCreated(dispatch);
-    }
+        // return await this.updateDispatchStatusCreated(dispatch);
+    } */
 
 
     // LOGS
 
     public async addLog(message: Message, text: string, isTechnical: boolean): Promise<MessageLog> {
-        const log = new MessageLog();
-        // log.idMessage = message._id;
+        let log = new MessageLog();
         log.text = text;
         log.isTechnical = isTechnical;
 
+        log = await this.messageDao.insertLog(log);
         return this.messageDao.addLog(message, log);
     }
 
     public async addDispatchLog(dispatch: MessageDispatch, text: string, isTechnical: boolean): Promise<MessageLog> {
-        const log = new MessageLog();
-        // log.idMessage = dispatch.message._id;
-        // log.idDispatch = dispatch._id;
+        let log = new MessageLog();
         log.text = text;
         log.isTechnical = isTechnical;
 
+        log = await this.messageDao.insertLog(log);
         return this.messageDao.addDispatchLog(dispatch, log);
     }
 }

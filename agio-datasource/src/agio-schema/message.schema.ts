@@ -7,6 +7,7 @@ import { Document, ObjectId, Types } from 'mongoose';
 import { Prop, Schema, SchemaFactory } from "@nestjs/mongoose";
 import { AgioBaseSchema } from '../agio-common/base.schema';
 import { MessageValidation } from './message-validation.schema';
+import { User } from './user.schema';
 
 export type MessageDocument = Message & Document;
 
@@ -16,11 +17,12 @@ export type MessageDocument = Message & Document;
 })
 export class Message extends AgioBaseSchema {
 
-    @Prop({ type: Types.ObjectId, required: true })
-    idUser: ObjectId;
-
-    @Prop({ type: Types.ObjectId })
-    idTemplate: ObjectId;
+    @Prop({
+        type: Types.ObjectId,
+        ref: User.name,
+        required: true
+    })
+    user: User;
 
     @Prop()
     status: MessageStatus;
@@ -32,6 +34,12 @@ export class Message extends AgioBaseSchema {
     })
     text: MessageText; 
 
+    /* @Prop({
+        type: [MessageDispatch],
+        ref: MessageDispatch.name
+    })
+    dispatches: MessageDispatch[]; */
+
     @Prop({
         type: Types.ObjectId,
         ref: MessageValidation.name,
@@ -39,17 +47,9 @@ export class Message extends AgioBaseSchema {
     })
     validation: MessageValidation; 
 
-    /* @Prop({
-        type: [MessageDispatch],
-        ref: MessageDispatch.name,
-        autopopulate: false
-    })
-    dispatches: MessageDispatch[]; */
-
     @Prop({ type: [{
         type: Types.ObjectId,
-        ref: MessageLog.name,
-        autopopulate: false
+        ref: MessageLog.name
     }]})
     logs: MessageLog[]; 
 }

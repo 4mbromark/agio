@@ -22,12 +22,12 @@ export class AgioSendProcessService {
 
         for (let dispatch of dispatchList) {
             const id = dispatch._id;
-            this.logger.log('[SEND-DISPATCH] Elaborazione record con ID = [{}]', id);
+            this.logger.log('[SEND-DISPATCH] Elaborazione record con ID = [' + id + ']');
 
             dispatch = await this.messageService.updateDispatchStatusSending(dispatch);
 
             if (!dispatch) { // TODO
-                this.logger.log('[SEND-DISPATCH] Record con ID = [{}] elaborato da un altro processo' + id);
+                this.logger.warn('[SEND-DISPATCH] Record con ID = [' + id + '] elaborato da un altro processo');
                 dispatchList.splice(dispatchList.indexOf(dispatch), 1);
                 continue;
             }
@@ -36,7 +36,7 @@ export class AgioSendProcessService {
             const report = new SendReport();
 
             dispatch = await this.messageService.updateDispatchSent(dispatch, report.identifier, report.isFailed(), report.detail);
-            this.logger.log('[SEND-DISPATCH] Record con ID = [{}] e IDENTIFIER = [{}] {}, {}', id, report.identifier, report.isFailed() ? 'INVIO FALLITO' : 'INVIO RIUSCITO', report.detail);
+            this.logger.log('[SEND-DISPATCH] Record con ID = [' + id + '] e IDENTIFIER = [' + report.identifier + '] ' + (report.isFailed() ? 'INVIO FALLITO' : 'INVIO RIUSCITO') + ', ' + report.detail);
             report.isFailed() ? result.addError() : result.addSuccess();
 
             // TODO SCHEDULE ANOTHER

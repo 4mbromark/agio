@@ -2,6 +2,7 @@ import { Collection } from '../agio-namespace/collection.namespace';
 import { Document, ObjectId, Types } from 'mongoose';
 import { Prop, Schema, SchemaFactory } from "@nestjs/mongoose";
 import { AgioBaseSchema } from '../agio-common/base.schema';
+import { User } from './user.schema';
 
 export type MessageTemplateDocument = MessageTemplate & Document;
 
@@ -11,8 +12,12 @@ export type MessageTemplateDocument = MessageTemplate & Document;
 })
 export class MessageTemplate extends AgioBaseSchema {
 
-    @Prop({ type: Types.ObjectId, required: true })
-    idUser: ObjectId;
+    @Prop({
+        type: Types.ObjectId,
+        ref: User.name,
+        required: true
+    })
+    user: User;
 
     @Prop({ required: true }) 
     object: string;

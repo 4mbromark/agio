@@ -11,8 +11,6 @@ export type MessageTextDocument = MessageText & Document;
 })
 export class MessageText extends MessageTemplate {
 
-    @Prop({ type: Types.ObjectId, required: true, unique: true })
-    idMessage: ObjectId;
 }
 
 export const MessageTextSchema = SchemaFactory.createForClass(MessageText);

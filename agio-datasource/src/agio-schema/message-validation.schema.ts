@@ -11,9 +11,6 @@ export type MessageValidationDocument = MessageValidation & Document;
 })
 export class MessageValidation extends AgioBaseSchema {
 
-    @Prop({ type: Types.ObjectId, required: true })
-    idMessage: ObjectId;
-
     @Prop({ default: null })
     isValid: boolean;
 

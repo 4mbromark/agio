@@ -23,15 +23,12 @@ export class AgioCheckProcessService {
 
         for (let message of messageList) {
             const id = message._id;
-            this.logger.log('[CHECK-MESSAGE] Elaborazione record con ID = [{}]', id);
+            this.logger.log('[CHECK-MESSAGE] Elaborazione record con ID = [' + id + ']');
 
             message = await this.messageService.updateStatusValidating(message);
 
-            console.log('precheck');
-            console.log(message);
-
-            if (!message) { // TODO
-                this.logger.log('[CHECK-MESSAGE] Record con ID = [{}] elaborato da un altro processo' + id);
+            if (!message) {
+                this.logger.warn('[CHECK-MESSAGE] Record con ID = [' + id + '] elaborato da un altro processo');
                 messageList.splice(messageList.indexOf(message), 1);
                 continue;
             }
@@ -39,10 +36,8 @@ export class AgioCheckProcessService {
             const force = false;
             const validation = this.validateMessage(message);
 
-            console.log('adding validation');
-
             message = await this.messageService.addValidation(message, validation.isValid(), validation.errors, force);
-            this.logger.log('[CHECK-MESSAGE] Record con ID = [{}] {}, FORCE = [{}]', id, validation.isValid() ? 'VALIDO' : 'NON VALIDO', force);
+            this.logger.log('[CHECK-MESSAGE] Record con ID = [' + id + '] ' + (validation.isValid() ? 'VALIDO' : 'NON VALIDO') + ', FORCE = [' + force + ']');
             validation.isValid() ? result.addSuccess() : result.addError();
         }
 
@@ -53,30 +48,20 @@ export class AgioCheckProcessService {
     private validateMessage(message: Message): ValidationReport {
         const report = new ValidationReport();
 
-        console.log(1);
-
         if (!message.text) {
-            console.log(2);
             report.addError('Messaggio mancante');
-            console.log(3);
         } else {
-            console.log(4);
             if (!message.text.object || message.text.object.trim() === '') {
-                console.log(5);
                 report.addError('Oggetto del messaggio vuoto o nullo');
-                console.log(6);
             }
             if (!message.text.body || message.text.body.trim() === '') {
-                console.log(7);
                 report.addError('Corpo del messaggio vuoto o nullo');
-                console.log(8);
             }
         }
 
         // if (message.dispatches.length === 0) {
         //    report.addError('Nessun invio programmato per il messaggio');
         // }
-        console.log(9);
         return report;
     }
 
@@ -92,12 +77,12 @@ export class AgioCheckProcessService {
 
         for (let dispatch of dispatchList) {
             const id = dispatch._id;
-            this.logger.log('[CHECK-DISPATCH] Elaborazione record con ID = [{}]', id);
+            this.logger.log('[CHECK-DISPATCH] Elaborazione record con ID = [' + id + ']');
 
             dispatch = await this.messageService.updateDispatchStatusValidating(dispatch);
 
-            if (!dispatch) { // TODO
-                this.logger.log('[CHECK-DISPATCH] Record con ID = [{}] elaborato da un altro processo' + id);
+            if (!dispatch) {
+                this.logger.warn('[CHECK-DISPATCH] Record con ID = [' + id + '] elaborato da un altro processo');
                 dispatchList.splice(dispatchList.indexOf(dispatch), 1);
                 continue;
             }
@@ -106,7 +91,7 @@ export class AgioCheckProcessService {
             const validation = this.validateMessageDispatch(dispatch);
 
             dispatch = await this.messageService.addDispatchValidation(dispatch, validation.isValid(), validation.errors, force);
-            this.logger.log('[CHECK-DISPATCH] Record con ID = [{}] {}, FORCE = [{}]', id, validation.isValid() ? 'VALIDO' : 'NON VALIDO', force);
+            this.logger.log('[CHECK-DISPATCH] Record con ID = [' + id + '] ' + (validation.isValid() ? 'VALIDO' : 'NON VALIDO') + ', FORCE = [' + force + ']');
             validation.isValid() ? result.addSuccess() : result.addError();
         }
 

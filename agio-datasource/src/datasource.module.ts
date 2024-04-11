@@ -11,7 +11,6 @@ import { AgioMessageDao } from './agio-dao/message.dao';
 import { AgioProviderDao } from './agio-dao/provider.dao';
 import { AgioMessageService } from './agio-service/message.service';
 import { AgioProviderService } from './agio-service/provider.service';
-import { MessageDispatchValidation, MessageDispatchValidationSchema } from './agio-schema/message-dispatch-validation.schema';
 import { MessageDispatch, MessageDispatchSchema } from './agio-schema/message-dispatch.schema';
 import { MessageLog, MessageLogSchema } from './agio-schema/message-log.schema';
 import { MessageValidation, MessageValidationSchema } from './agio-schema/message-validation.schema';
@@ -39,8 +38,7 @@ import { MessageDispatchParameter, MessageDispatchParameterSchema } from './agio
       { name: MessageDispatchParameter.name, schema: MessageDispatchParameterSchema },
       { name: MessageReceiver.name, schema: MessageReceiverSchema },
       { name: MessageLog.name, schema: MessageLogSchema },
-      { name: MessageValidation.name, schema: MessageValidationSchema },
-      { name: MessageDispatchValidation.name, schema: MessageDispatchValidationSchema }
+      { name: MessageValidation.name, schema: MessageValidationSchema }
     ])
   ],
   controllers: [],

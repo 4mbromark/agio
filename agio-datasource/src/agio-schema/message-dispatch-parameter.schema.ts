@@ -15,9 +15,6 @@ export type MessageDispatchParameterDocument = MessageDispatchParameter & Docume
 // TODO unique idTrace + key
 export class MessageDispatchParameter extends AgioBaseSchema {
 
-    @Prop({ type: Types.ObjectId, required: true })
-    idTrace: ObjectId
-
     @Prop({ required: true })
     key: string
 

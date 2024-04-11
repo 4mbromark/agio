@@ -11,12 +11,6 @@ export type MessageLogDocument = MessageLog & Document;
 })
 export class MessageLog extends AgioBaseSchema {
 
-    @Prop({ type: Types.ObjectId, required: true })
-    idMessage: ObjectId;
-
-    @Prop({ type: Types.ObjectId, default: null })
-    idDispatch: ObjectId;
-
     @Prop({ required: true }) 
     text: string;
 
